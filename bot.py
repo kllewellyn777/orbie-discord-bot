@@ -262,7 +262,6 @@ async def run_conversation(channel, topic: str):
         relay_text = build_relay(orbie_response, get_chat_history(channel_id))
         try:
             relay_msg = await channel.send(relay_text)
-            await asyncio.sleep(0.5)
             await relay_msg.delete()
         except Exception as e:
             print(f"  ↳ ⚠️ Relay failed: {e}", flush=True)
@@ -383,6 +382,10 @@ async def on_message(message):
     is_mentioned = client.user in message.mentions
 
     if not (is_dm or is_mentioned):
+        return
+
+    # Don't respond via mention handler during an active !start conversation
+    if _active_convo.get(message.channel.id):
         return
 
     # Strip our own mention from text
