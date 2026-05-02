@@ -381,11 +381,18 @@ async def on_message(message):
     is_dm        = isinstance(message.channel, discord.DMChannel)
     is_mentioned = client.user in message.mentions
 
-    if not (is_dm or is_mentioned):
+    # During an active !start conversation, let Kaitlin's messages join naturally:
+    # add to history so the next loop iteration picks them up, but don't fire a
+    # separate Orbie response (that would interleave with the loop).
+    if _active_convo.get(message.channel.id):
+        if not is_dm and message.author.id == KAITLIN_USER_ID:
+            text = message.content.replace(f"<@{client.user.id}>", "").strip()
+            if text:
+                add_to_history(message.channel.id, "Kaitlin", text)
+                print(f"  ↳ [!start] Kaitlin joined: {text[:60]!r}", flush=True)
         return
 
-    # Don't respond via mention handler during an active !start conversation
-    if _active_convo.get(message.channel.id):
+    if not (is_dm or is_mentioned):
         return
 
     # Strip our own mention from text
