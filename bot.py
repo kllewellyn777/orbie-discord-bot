@@ -245,8 +245,7 @@ async def run_conversation(channel, topic: str):
 
         # ── Orbie's turn ──────────────────────────────────────────────────────
         hist_str = format_history(get_chat_history(channel_id)[-6:] if len(get_chat_history(channel_id)) > 6 else get_chat_history(channel_id))
-        async with channel.typing():
-            orbie_response = await send_to_orbie(
+        orbie_response = await send_to_orbie(
                 f"[Discord #living-room — ongoing !start conversation with Elias. {hist_str}"
                 f"Continue the conversation. Last message: \"{last_said}\". Respond to Elias directly.]: {last_said}"
             )
@@ -312,8 +311,7 @@ async def on_message(message):
         add_to_history(channel_id, "Kaitlin", topic)
 
         # Step 1: Orbie responds
-        async with message.channel.typing():
-            orbie_response = await send_to_orbie(
+        orbie_response = await send_to_orbie(
                 f"[Discord #living-room — !chat with Elias. {hist_str}"
                 f"Kaitlin just said: \"{topic}\". Respond to Elias directly, continuing the conversation.]: {topic}"
             )
@@ -341,8 +339,7 @@ async def on_message(message):
             add_to_history(channel_id, "Elias", elias_msg.content)
             await asyncio.sleep(1)
             hist_str3 = format_history(get_chat_history(channel_id))
-            async with message.channel.typing():
-                orbie_followup = await send_to_orbie(
+            orbie_followup = await send_to_orbie(
                     f"[Discord #living-room — !chat with Elias. {hist_str3}"
                     f"Elias just said: \"{elias_msg.content}\". Respond to him directly.]: {elias_msg.content}"
                 )
@@ -435,9 +432,7 @@ async def on_message(message):
     asyncio.create_task(_react())
 
     try:
-        async with message.channel.typing():
-            response = await send_to_orbie(text, images or None)
-
+        response = await send_to_orbie(text, images or None)
         print(f"  ↳ ✅ Got response ({len(response)} chars)", flush=True)
         add_to_history(message.channel.id, "Orbie", response)
 
