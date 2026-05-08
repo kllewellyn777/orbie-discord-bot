@@ -1,5 +1,5 @@
 """
-Orbie (0rbi3) Discord Bot
+Orbie (0rbi3) Discord Bot — v2
 Responds to @mentions and DMs from humans only.
 No automatic bot-to-bot chaining — Kaitlin controls the conversation.
 """
