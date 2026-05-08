@@ -431,20 +431,8 @@ async def on_message(message):
             pass
     asyncio.create_task(_react())
 
-    # Show typing indicator in background (non-blocking)
-    typing_stop = asyncio.Event()
-    async def _keep_typing():
-        try:
-            while not typing_stop.is_set():
-                await message.channel.typing()
-                await asyncio.sleep(8)
-        except Exception:
-            pass
-    asyncio.create_task(_keep_typing())
-
     try:
         response = await send_to_orbie(text, images or None)
-        typing_stop.set()
         print(f"  ↳ ✅ Got response ({len(response)} chars)", flush=True)
         add_to_history(message.channel.id, "Orbie", response)
 
