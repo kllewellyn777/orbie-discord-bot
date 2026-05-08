@@ -305,7 +305,7 @@ async def on_message(message):
             await message.reply("Usage: `!chat <topic or question>`")
             return
         print(f"  ↳ 💬 !chat triggered: {topic[:60]!r}", flush=True)
-        await message.add_reaction(REACT_EMOJI)
+        asyncio.create_task(message.add_reaction(REACT_EMOJI))
         channel_id = message.channel.id
         history    = get_chat_history(channel_id)
         hist_str   = format_history(history)
@@ -426,10 +426,13 @@ async def on_message(message):
 
     print(f"  ↳ 💬 Sending to Orbie: {text[:80]!r}, images={len(images)}", flush=True)
 
-    try:
-        await message.add_reaction(REACT_EMOJI)
-    except Exception as e:
-        print(f"  ↳ ⚠️  Couldn't add reaction: {e}", flush=True)
+    # Fire reaction in background so it never blocks the reply
+    async def _react():
+        try:
+            await message.add_reaction(REACT_EMOJI)
+        except Exception:
+            pass
+    asyncio.create_task(_react())
 
     try:
         async with message.channel.typing():
