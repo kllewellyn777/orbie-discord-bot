@@ -35,6 +35,9 @@ intents.dm_messages     = True
 
 client = discord.Client(intents=intents)
 
+# Deduplication — prevent processing the same message twice
+_processed_message_ids: set[int] = set()
+
 # ── conversation state ────────────────────────────────────────────────────────
 import time as _time
 _chat_history: dict[int, list[str]]   = {}
@@ -296,6 +299,14 @@ async def on_ready():
 @client.event
 async def on_message(message):
     print(f"📨 Message from {message.author} (id={message.author.id}): {message.content[:60]!r}", flush=True)
+
+    # Deduplicate — skip if we've already processed this message
+    if message.id in _processed_message_ids:
+        print(f"  ↳ Duplicate message ID {message.id} — skipping", flush=True)
+        return
+    _processed_message_ids.add(message.id)
+    if len(_processed_message_ids) > 1000:
+        _processed_message_ids.clear()
 
     # ── !chat command — one controlled exchange between Orbie and Elias ──────
     if message.content.startswith("!chat ") and message.author.id == KAITLIN_USER_ID:
