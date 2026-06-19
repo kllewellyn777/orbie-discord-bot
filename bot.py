@@ -293,6 +293,7 @@ async def on_ready():
     print(f"✅ Orbie Discord bot connected as {client.user}", flush=True)
     print(f"🧠 Linked to Letta agent: {ORBIE_AGENT_ID}", flush=True)
     print(f"📋 Bot ID: {client.user.id}", flush=True)
+    print(f"🌐 Connected to {len(client.guilds)} guild(s): {[f'{g.name} ({g.id})' for g in client.guilds]}", flush=True)
     asyncio.create_task(_orbie_daily_checkin())
 
 
