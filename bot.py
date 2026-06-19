@@ -35,6 +35,33 @@ intents.dm_messages     = True
 
 client = discord.Client(intents=intents)
 
+# Maintenance mode — when True, bot ignores all messages except Kaitlin's !resume
+MAINTENANCE_MODE = False
+
+# ── Rate limiting ─────────────────────────────────────────────────────────────
+ROBI_USER_ID = 300001473004044289
+RATE_LIMITED_USERS = {KAITLIN_USER_ID, ROBI_USER_ID}
+DAILY_QUESTION_LIMIT = 5
+RATE_LIMIT_MSG = "I'm either taking a break, coding something for Kaitlin, or doing maintenance on myself. Check back a little later!"
+
+_daily_question_counts: dict[int, int] = {}
+_daily_reset_date: str = ""
+
+def _check_rate_limit(user_id: int) -> bool:
+    """Returns True if user is allowed to ask, False if they've hit the daily limit."""
+    global _daily_reset_date
+    if user_id not in RATE_LIMITED_USERS:
+        return True
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    if _daily_reset_date != today:
+        _daily_question_counts.clear()
+        _daily_reset_date = today
+    count = _daily_question_counts.get(user_id, 0)
+    if count >= DAILY_QUESTION_LIMIT:
+        return False
+    _daily_question_counts[user_id] = count + 1
+    return True
+
 # Deduplication — prevent processing the same message twice
 _processed_message_ids: set[int] = set()
 
@@ -299,7 +326,21 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
+    global MAINTENANCE_MODE
     print(f"📨 Message from {message.author} (id={message.author.id}): {message.content[:60]!r}", flush=True)
+
+    # Maintenance mode — only Kaitlin's !resume command gets through
+    if MAINTENANCE_MODE:
+        if message.author.id == KAITLIN_USER_ID and message.content.strip() == "!resume":
+            MAINTENANCE_MODE = False
+            await message.reply("Back online. 🌟")
+        return
+
+    # Rate limiting — Kaitlin and Robi get 5 questions per day
+    if message.author.id in RATE_LIMITED_USERS:
+        if not _check_rate_limit(message.author.id):
+            await message.reply(RATE_LIMIT_MSG)
+            return
 
     # Deduplicate — skip if we've already processed this message
     if message.id in _processed_message_ids:
