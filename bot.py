@@ -44,22 +44,23 @@ RATE_LIMITED_USERS = {KAITLIN_USER_ID, ROBI_USER_ID}
 DAILY_QUESTION_LIMIT = 5
 RATE_LIMIT_MSG = "I'm either taking a break, coding something for Kaitlin, or doing maintenance on myself. Check back a little later!"
 
-_daily_question_counts: dict[int, int] = {}
-_daily_reset_date: str = ""
+_question_counts: dict[int, int] = {}
+_window_start: float = 0.0
+RESET_INTERVAL = 6 * 60 * 60  # 6 hours in seconds
 
 def _check_rate_limit(user_id: int) -> bool:
-    """Returns True if user is allowed to ask, False if they've hit the daily limit."""
-    global _daily_reset_date
+    """Returns True if user is allowed to ask, False if they've hit the 6-hour limit."""
+    global _window_start
     if user_id not in RATE_LIMITED_USERS:
         return True
-    today = datetime.utcnow().strftime("%Y-%m-%d")
-    if _daily_reset_date != today:
-        _daily_question_counts.clear()
-        _daily_reset_date = today
-    count = _daily_question_counts.get(user_id, 0)
+    now = _time.time()
+    if now - _window_start >= RESET_INTERVAL:
+        _question_counts.clear()
+        _window_start = now
+    count = _question_counts.get(user_id, 0)
     if count >= DAILY_QUESTION_LIMIT:
         return False
-    _daily_question_counts[user_id] = count + 1
+    _question_counts[user_id] = count + 1
     return True
 
 # Deduplication — prevent processing the same message twice
